@@ -26,10 +26,14 @@ jobs:
 
       - name: Prepare Signing & Environment
         run: |
-          # Decode keystore from base64 if available
           if [ -f "debug.keystore.base64" ]; then
             base64 -d debug.keystore.base64 > debug.keystore
           fi
+          if [ ! -f "debug.keystore" ]; then
+            keytool -genkey -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
+          fi
+          cp debug.keystore app/debug.keystore || true
+          ls -l debug.keystore
           
           # Ensure .env exists for Secrets Gradle plugin
           if [ ! -f ".env" ] && [ -f ".env.example" ]; then
