@@ -1,0 +1,22 @@
+{
+  "name": "voicekadai",
+  "version": "1.0.0",
+  "description": "AI Voice Business Assistant for Indian Small Businesses — Speak your business. We handle the records.",
+  "private": true,
+  "scripts": {
+    "build": "gradle assembleDebug",
+    "test": "gradle testDebugUnitTest",
+    "lint": "gradle lintDebug"
+  },
+  "keywords": [
+    "android",
+    "jetpack-compose",
+    "kotlin",
+    "voice-assistant",
+    "business-ledger",
+    "khata",
+    "gemini-ai"
+  ],
+  "author": "Safiya Umar <safiya.umar13@gmail.com>",
+  "license": "MIT"
+}

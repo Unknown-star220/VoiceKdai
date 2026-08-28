@@ -1,0 +1,6 @@
+{
+  "name": "VoiceKadai",
+  "description": "AI Voice Business Assistant for Indian Small Businesses — Speak your business. We handle the records.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
