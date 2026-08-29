@@ -376,6 +376,11 @@ class VoiceKadaiRepository(private val dao: VoiceKadaiDao) {
 
     val paymentsFlow: Flow<List<SubscriptionPaymentEntity>> = dao.getAllPayments()
 
+    suspend fun updateLanguage(language: String) = withContext(Dispatchers.IO) {
+        val currentBiz = dao.getBusiness() ?: BusinessEntity()
+        dao.insertBusiness(currentBiz.copy(language = language))
+    }
+
     suspend fun signInWithProvider(
         provider: String,
         email: String,
@@ -384,36 +389,24 @@ class VoiceKadaiRepository(private val dao: VoiceKadaiDao) {
         phone: String? = null
     ) = withContext(Dispatchers.IO) {
         val currentBiz = dao.getBusiness() ?: BusinessEntity()
-        val isDev = isDeveloperEmail(email)
         
-        // Developer starts with PRO. Any other email starts with FREE unless already subscribed
+        // Check if this specific email has an existing active paid subscription
         val isExistingPaidPlan = currentBiz.userEmail.equals(email.trim(), ignoreCase = true) && 
-                (currentBiz.planTier == "PRO" || currentBiz.planTier == "BUSINESS")
+                (currentBiz.planTier == "PRO" || currentBiz.planTier == "BUSINESS") &&
+                (currentBiz.subscriptionExpiry > System.currentTimeMillis())
         
-        val assignedTier = when {
-            isDev -> "PRO"
-            isExistingPaidPlan -> currentBiz.planTier
-            else -> "FREE"
-        }
-        val assignedQuota = when {
-            isDev -> 100
-            isExistingPaidPlan -> currentBiz.maxDailyVoiceQuota
-            else -> 5 // Free Plan Daily Quota
-        }
-        val assignedExpiry = when {
-            isDev -> (System.currentTimeMillis() + 3650L * 24 * 3600 * 1000) // Developer Lifetime/Perpetual PRO
-            isExistingPaidPlan -> currentBiz.subscriptionExpiry
-            else -> 0L
-        }
+        val assignedTier = if (isExistingPaidPlan) currentBiz.planTier else "FREE"
+        val assignedQuota = if (isExistingPaidPlan) currentBiz.maxDailyVoiceQuota else 50
+        val assignedExpiry = if (isExistingPaidPlan) currentBiz.subscriptionExpiry else 0L
 
         val updated = currentBiz.copy(
             isSignedIn = true,
             authProvider = provider,
             userEmail = email.trim(),
             userDisplayName = displayName.trim(),
-            name = businessName ?: currentBiz.name,
-            phone = phone ?: currentBiz.phone,
-            ownerName = displayName.trim(),
+            name = businessName?.ifBlank { currentBiz.name } ?: currentBiz.name,
+            phone = phone?.ifBlank { currentBiz.phone } ?: currentBiz.phone,
+            ownerName = displayName.trim().ifBlank { currentBiz.ownerName },
             planTier = assignedTier,
             maxDailyVoiceQuota = assignedQuota,
             subscriptionExpiry = assignedExpiry

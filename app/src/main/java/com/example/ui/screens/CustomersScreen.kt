@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entities.CustomerEntity
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +40,7 @@ fun CustomersScreen(
     onAddNewCustomer: (name: String, phone: String, initialBalance: Double, notes: String) -> Unit,
     onVoiceEntryPrompt: (String) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     var showAddDialog by remember { mutableStateOf(false) }
 
     val filteredCustomers = customers.filter { cust ->
@@ -63,7 +65,7 @@ fun CustomersScreen(
                     .padding(bottom = 70.dp)
                     .testTag("add_customer_fab")
             ) {
-                Icon(Icons.Default.PersonAdd, contentDescription = "Add Customer")
+                Icon(Icons.Default.PersonAdd, contentDescription = strings.addCustomer)
             }
         }
     ) { paddingVals ->
@@ -87,7 +89,7 @@ fun CustomersScreen(
                 ) {
                     Column {
                         Text(
-                            text = "YOU'LL GET (வரவேண்டியது)",
+                            text = strings.pendingUdhaar.uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = UdhaarRed
@@ -102,13 +104,13 @@ fun CustomersScreen(
 
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "TOTAL CUSTOMERS",
+                            text = strings.allCustomers.uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = TextSecondary
                         )
                         Text(
-                            text = if (customers.isNotEmpty()) "${customers.size} Khata Accounts" else "--",
+                            text = if (customers.isNotEmpty()) "${customers.size} ${strings.khata}" else "--",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -126,7 +128,7 @@ fun CustomersScreen(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = onSearchChange,
-                    placeholder = { Text("Search customer name or mobile number...") },
+                    placeholder = { Text(strings.searchPlaceholder) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
@@ -148,7 +150,7 @@ fun CustomersScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    listOf("ALL" to "All", "UDHAAR" to "Udhaar (Due)", "ADVANCE" to "Advance", "SETTLED" to "Settled").forEach { (key, label) ->
+                    listOf("ALL" to strings.allCustomers, "UDHAAR" to strings.filterUdhaar, "ADVANCE" to strings.filterAdvance, "SETTLED" to strings.filterSettled).forEach { (key, label) ->
                         FilterChip(
                             selected = filter == key,
                             onClick = { onFilterChange(key) },
@@ -175,16 +177,10 @@ fun CustomersScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "No customers found",
+                            text = strings.noCustomersYet,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = TextSecondary
-                        )
-                        Text(
-                            text = "Tap '+' to add a customer, or speak: \"Kumar kitta 5000 balance irukku\"",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextMuted,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                     }
                 }
@@ -222,15 +218,15 @@ fun CustomerCard(
     customer: CustomerEntity,
     onClick: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     val balance = customer.currentBalance
     val isUdhaar = balance > 0
     val isAdvance = balance < 0
-    val isSettled = balance == 0.0
 
     val (badgeColor, balanceText, subtitle) = when {
-        isUdhaar -> Triple(UdhaarRed, "₹${String.format("%,.0f", balance)}", "You'll Get (கடன்)")
-        isAdvance -> Triple(JamaGreen, "₹${String.format("%,.0f", Math.abs(balance))}", "Advance (முன்பணம்)")
-        else -> Triple(TextMuted, "₹0", "Settled (முடிந்தது)")
+        isUdhaar -> Triple(UdhaarRed, "₹${String.format("%,.0f", balance)}", strings.gaveUdhaar)
+        isAdvance -> Triple(JamaGreen, "₹${String.format("%,.0f", Math.abs(balance))}", strings.filterAdvance)
+        else -> Triple(TextMuted, "₹0", strings.filterSettled)
     }
 
     Card(
@@ -315,6 +311,7 @@ fun AddCustomerDialog(
     onDismiss: () -> Unit,
     onConfirm: (name: String, phone: String, initialBalance: Double, notes: String) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var balanceStr by remember { mutableStateOf("") }
@@ -322,7 +319,7 @@ fun AddCustomerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Customer to Khata", fontWeight = FontWeight.Bold) },
+        title = { Text(strings.addCustomer, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
@@ -335,7 +332,7 @@ fun AddCustomerDialog(
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
-                    label = { Text("Mobile Number") },
+                    label = { Text(strings.enterPhone) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -343,7 +340,7 @@ fun AddCustomerDialog(
                 OutlinedTextField(
                     value = balanceStr,
                     onValueChange = { balanceStr = it },
-                    label = { Text("Opening Udhaar Balance (₹)") },
+                    label = { Text("Opening Balance (₹)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -367,12 +364,12 @@ fun AddCustomerDialog(
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
             ) {
-                Text("Add Customer")
+                Text(strings.save)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(strings.cancel)
             }
         }
     )

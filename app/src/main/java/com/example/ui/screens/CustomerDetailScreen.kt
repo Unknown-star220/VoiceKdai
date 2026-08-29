@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.local.entities.CustomerEntity
 import com.example.data.local.entities.TransactionEntity
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -41,8 +42,9 @@ fun CustomerDetailScreen(
     onRecordTransaction: (customerId: String, customerName: String, amount: Double, isGaveCredit: Boolean, note: String) -> Unit,
     onDeleteCustomer: (String) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     val context = LocalContext.current
-    var showEntryDialog by remember { mutableStateOf<Boolean?>(null) } // true = Gave ₹ (Credit), false = Got ₹ (Jama), null = closed
+    var showEntryDialog by remember { mutableStateOf<Boolean?>(null) }
     var entryAmount by remember { mutableStateOf("") }
     var entryNote by remember { mutableStateOf("") }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -61,13 +63,13 @@ fun CustomerDetailScreen(
     val isAdvance = balance < 0
 
     val (badgeColor, balanceTitle, balanceSub) = when {
-        isUdhaar -> Triple(UdhaarRed, "₹${String.format("%,.0f", balance)}", "You will get (கடன் வசூல் பாக்கி)")
-        isAdvance -> Triple(JamaGreen, "₹${String.format("%,.0f", Math.abs(balance))}", "You will give (முன்பணம்)")
-        else -> Triple(EmeraldPrimary, "₹0", "Settled (கணக்கு நேர் செய்யப்பட்டது)")
+        isUdhaar -> Triple(UdhaarRed, "₹${String.format("%,.0f", balance)}", strings.gaveUdhaar)
+        isAdvance -> Triple(JamaGreen, "₹${String.format("%,.0f", Math.abs(balance))}", strings.filterAdvance)
+        else -> Triple(EmeraldPrimary, "₹0", strings.filterSettled)
     }
 
     fun shareWhatsAppReminder() {
-        val message = "Vanakkam ${customer.name}, this is a gentle reminder from Sri Lakshmi Kirana Store regarding your pending ledger balance of ₹${String.format("%,.0f", balance)}. Kindly settle via GPay/PhonePe or Cash at your earliest convenience. Nandri! 🙏"
+        val message = "Vanakkam ${customer.name}, this is a gentle reminder regarding your pending ledger balance of ₹${String.format("%,.0f", balance)}. Kindly settle via UPI or Cash. Nandri! 🙏"
         try {
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
@@ -99,59 +101,11 @@ fun CustomerDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { shareWhatsAppReminder() }) {
-                        Icon(Icons.Default.Share, contentDescription = "Share Reminder", tint = EmeraldPrimary)
-                    }
                     IconButton(onClick = { showDeleteConfirm = true }) {
-                        Icon(Icons.Outlined.Delete, contentDescription = "Delete Customer", tint = TextMuted)
+                        Icon(Icons.Outlined.Delete, contentDescription = "Delete", tint = TextMuted)
                     }
                 }
             )
-        },
-        bottomBar = {
-            // Gave ₹ (Credit) and Got ₹ (Jama) Buttons
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 8.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Button(
-                        onClick = { showEntryDialog = true },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp)
-                            .testTag("gave_credit_button"),
-                        colors = ButtonDefaults.buttonColors(containerColor = UdhaarRed),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Icon(Icons.Default.ArrowUpward, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Gave ₹ (Udhaar)", fontWeight = FontWeight.Bold)
-                    }
-
-                    Button(
-                        onClick = { showEntryDialog = false },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(52.dp)
-                            .testTag("got_payment_button"),
-                        colors = ButtonDefaults.buttonColors(containerColor = JamaGreen),
-                        shape = RoundedCornerShape(14.dp)
-                    ) {
-                        Icon(Icons.Default.ArrowDownward, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Got ₹ (Jama)", fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
         }
     ) { paddingVals ->
         LazyColumn(
@@ -160,9 +114,9 @@ fun CustomerDetailScreen(
                 .padding(paddingVals)
                 .testTag("customer_detail_screen"),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Net Balance Hero Card
+            // Customer Balance Summary Card
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -170,36 +124,73 @@ fun CustomerDetailScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     border = androidx.compose.foundation.BorderStroke(1.dp, badgeColor.copy(alpha = 0.3f))
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = balanceSub,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = badgeColor
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = balanceTitle,
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = badgeColor
-                        )
-                        Spacer(modifier = Modifier.height(14.dp))
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(balanceSub.uppercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = badgeColor)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(balanceTitle, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black, color = badgeColor)
+                            }
+                            Surface(
+                                color = badgeColor.copy(alpha = 0.12f),
+                                shape = CircleShape,
+                                modifier = Modifier.size(52.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = customer.name.take(1).uppercase(),
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.Black,
+                                        color = badgeColor
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Quick Entry Buttons (Gave Udhaar / Got Payment)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Button(
+                                onClick = { showEntryDialog = true },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = UdhaarRed),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.ArrowUpward, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(strings.gaveUdhaar, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            Button(
+                                onClick = { showEntryDialog = false },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = JamaGreen),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.ArrowDownward, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(strings.gotJama, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
 
                         if (isUdhaar) {
-                            Button(
+                            Spacer(modifier = Modifier.height(10.dp))
+                            OutlinedButton(
                                 onClick = { shareWhatsAppReminder() },
-                                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                                modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Send WhatsApp Reminder (வாட்ஸ்அப் நினைவு)")
+                                Text("WhatsApp Reminder")
                             }
                         }
                     }
@@ -216,7 +207,7 @@ fun CustomerDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Ledger History (கணக்கு பட்டியல்)",
+                        text = strings.recentTransactions,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -244,9 +235,9 @@ fun CustomerDetailScreen(
                 items(transactions) { tx ->
                     val isGave = tx.type == "SALE_CREDIT"
                     val (tagColor, tagBg, symbol, label) = if (isGave) {
-                        listOf(UdhaarRed, UdhaarRedContainer, "+₹", "GAVE (Udhaar)")
+                        listOf(UdhaarRed, UdhaarRedContainer, "+₹", strings.gaveUdhaar)
                     } else {
-                        listOf(JamaGreen, JamaGreenContainer, "-₹", "GOT (Jama)")
+                        listOf(JamaGreen, JamaGreenContainer, "-₹", strings.gotJama)
                     }
 
                     Card(
@@ -290,14 +281,6 @@ fun CustomerDetailScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
-                                if (!tx.audioTranscript.isNullOrBlank()) {
-                                    Text(
-                                        text = "Voice: \"${tx.audioTranscript}\"",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = TextMuted,
-                                        fontSize = 10.sp
-                                    )
-                                }
                             }
 
                             Text(
@@ -320,7 +303,7 @@ fun CustomerDetailScreen(
             onDismissRequest = { showEntryDialog = null },
             title = {
                 Text(
-                    text = if (isGave) "Gave ₹ (Udhaar) to ${customer.name}" else "Got ₹ (Payment) from ${customer.name}",
+                    text = if (isGave) "${strings.gaveUdhaar} to ${customer.name}" else "${strings.gotJama} from ${customer.name}",
                     fontWeight = FontWeight.Bold,
                     color = if (isGave) UdhaarRed else JamaGreen
                 )
@@ -357,12 +340,12 @@ fun CustomerDetailScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = if (isGave) UdhaarRed else JamaGreen)
                 ) {
-                    Text("Save Entry")
+                    Text(strings.save)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showEntryDialog = null }) {
-                    Text("Cancel")
+                    Text(strings.cancel)
                 }
             }
         )
@@ -387,7 +370,7 @@ fun CustomerDetailScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text("Cancel")
+                    Text(strings.cancel)
                 }
             }
         )

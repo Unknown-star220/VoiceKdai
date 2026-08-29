@@ -30,24 +30,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.*
+import com.example.ui.util.getAppStrings
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthScreen(
+    currentLanguage: String = "Tanglish",
+    onLanguageChange: (String) -> Unit = {},
     onSignInWithGoogle: (email: String, name: String, storeName: String, phone: String) -> Unit,
     onSignInWithMicrosoft: (email: String, name: String, storeName: String, phone: String) -> Unit,
     onSignInWithPhone: (phone: String, name: String, storeName: String) -> Unit,
     onExploreAsGuest: () -> Unit
 ) {
-    var authMode by remember { mutableStateOf("SOCIAL") } // "SOCIAL", "PHONE", "CUSTOM_EMAIL"
-    var phoneNumber by remember { mutableStateOf("+91 98401 23456") }
+    var selectedLang by remember { mutableStateOf(currentLanguage) }
+    val strings = remember(selectedLang) { getAppStrings(selectedLang) }
+
+    var userEmail by remember { mutableStateOf("") }
+    var ownerName by remember { mutableStateOf("") }
+    var storeName by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
     var otpCode by remember { mutableStateOf("") }
     var otpSent by remember { mutableStateOf(false) }
-    var storeName by remember { mutableStateOf("Sri Lakshmi Kirana & General Store") }
-    var ownerName by remember { mutableStateOf("Merchant Owner") }
-    var customEmail by remember { mutableStateOf("merchant.kirana@gmail.com") }
-    var showCustomEmailField by remember { mutableStateOf(false) }
+    var showEmailForm by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
 
@@ -78,39 +83,79 @@ fun AuthScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Top Brand Header
+                // Top Language Switcher Bar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val langOptions = listOf("English", "தமிழ்", "Tanglish", "हिंदी")
+                    var langMenuExpanded by remember { mutableStateOf(false) }
+
+                    Box {
+                        OutlinedButton(
+                            onClick = { langMenuExpanded = true },
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(20.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface)
+                        ) {
+                            Icon(Icons.Default.Translate, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldPrimary)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(selectedLang, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp))
+                        }
+
+                        DropdownMenu(
+                            expanded = langMenuExpanded,
+                            onDismissRequest = { langMenuExpanded = false }
+                        ) {
+                            langOptions.forEach { lang ->
+                                DropdownMenuItem(
+                                    text = { Text(lang, fontWeight = if (selectedLang.startsWith(lang.take(4))) FontWeight.Bold else FontWeight.Normal) },
+                                    onClick = {
+                                        selectedLang = lang
+                                        onLanguageChange(lang)
+                                        langMenuExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Brand Header
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(top = 24.dp)
+                    modifier = Modifier.padding(top = 12.dp)
                 ) {
                     // Glowing Emerald Mic Badge
                     Surface(
                         color = EmeraldPrimary,
                         shape = CircleShape,
                         shadowElevation = 8.dp,
-                        modifier = Modifier.size(80.dp)
+                        modifier = Modifier.size(76.dp)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Default.Mic,
                                 contentDescription = "VoiceKadai Logo",
                                 tint = Color.White,
-                                modifier = Modifier.size(44.dp)
+                                modifier = Modifier.size(42.dp)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
-                        text = "VoiceKadai",
+                        text = strings.appName,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = EmeraldDark
                     )
 
                     Text(
-                        text = "Speak your business. We handle the records.",
+                        text = strings.authTagline,
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary,
                         textAlign = TextAlign.Center
@@ -123,7 +168,7 @@ fun AuthScreen(
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Text(
-                            text = "🇮🇳 Built for Indian MSME Merchants & Kirana Stores",
+                            text = "🇮🇳 ${strings.authBadge}",
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
@@ -132,7 +177,7 @@ fun AuthScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Sign-In Options Card
                 Card(
@@ -147,12 +192,14 @@ fun AuthScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Sign In to Your Merchant Account",
+                            text = strings.signInTitle,
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Sync your voice khata, ledgers & UPI reminders across devices",
+                            text = strings.signInSubtitle,
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
                             textAlign = TextAlign.Center
@@ -160,128 +207,125 @@ fun AuthScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // 1. Developer Google Sign-In Button (PRO Plan)
-                        Button(
-                            onClick = {
-                                onSignInWithGoogle(
-                                    "safiya.umar13@gmail.com",
-                                    "Safiya Umar",
-                                    storeName,
-                                    phoneNumber
-                                )
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp)
-                                .testTag("btn_google_signin_dev"),
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White,
-                                contentColor = Color(0xFF1F1F1F)
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(1.5.dp, EmeraldPrimary),
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    GoogleLogoIcon(modifier = Modifier.size(22.dp))
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
-                                        Text(
-                                            text = "Developer Login (Safiya Umar)",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp,
-                                            color = Color(0xFF1F1F1F)
-                                        )
-                                        Text(
-                                            text = "safiya.umar13@gmail.com",
-                                            fontSize = 11.sp,
-                                            color = TextSecondary
-                                        )
-                                    }
-                                }
-                                Surface(
-                                    color = EmeraldContainer,
-                                    shape = RoundedCornerShape(6.dp)
-                                ) {
-                                    Text(
-                                        text = "PRO PLAN",
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = EmeraldDark
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Custom Email / Other Google Account Button (FREE Plan)
-                        if (!showCustomEmailField) {
-                            OutlinedButton(
-                                onClick = { showCustomEmailField = true },
+                        // Google Sign-In with User's Own Account
+                        if (!showEmailForm) {
+                            Button(
+                                onClick = { showEmailForm = true },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(48.dp)
-                                    .testTag("btn_custom_email_toggle"),
-                                shape = RoundedCornerShape(12.dp)
+                                    .height(52.dp)
+                                    .testTag("btn_google_signin"),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.White,
+                                    contentColor = Color(0xFF1F1F1F)
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFDADCE0)),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 1.dp)
                             ) {
-                                Icon(Icons.Default.AlternateEmail, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Sign In with Other Email (Free Plan)", fontWeight = FontWeight.SemiBold)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    GoogleLogoIcon(modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        text = strings.signInGoogle,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = Color(0xFF1F1F1F)
+                                    )
+                                }
                             }
                         } else {
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.4f))
                             ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
+                                Column(modifier = Modifier.padding(14.dp)) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text("Other Merchant Email (Free Plan)", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            GoogleLogoIcon(modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(strings.signInGoogle, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                        }
                                         Surface(
-                                            color = AmberContainer,
+                                            color = EmeraldContainer,
                                             shape = RoundedCornerShape(4.dp)
                                         ) {
                                             Text(
-                                                text = "FREE PLAN (5/day)",
+                                                text = "FREE PLAN (50/mo)",
                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.Bold,
-                                                color = OnAmberContainer
+                                                color = EmeraldDark
                                             )
                                         }
                                     }
-                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+
                                     OutlinedTextField(
-                                        value = customEmail,
-                                        onValueChange = { customEmail = it },
-                                        label = { Text("Email Address") },
+                                        value = userEmail,
+                                        onValueChange = { userEmail = it },
+                                        label = { Text(strings.enterEmail) },
+                                        placeholder = { Text("e.g. yourname@gmail.com") },
                                         leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = EmeraldPrimary) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                                        shape = RoundedCornerShape(10.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    OutlinedTextField(
+                                        value = ownerName,
+                                        onValueChange = { ownerName = it },
+                                        label = { Text(strings.enterOwnerName) },
+                                        placeholder = { Text("e.g. Ramesh Kumar") },
+                                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = EmeraldPrimary) },
                                         modifier = Modifier.fillMaxWidth(),
                                         singleLine = true,
                                         shape = RoundedCornerShape(10.dp)
                                     )
+
                                     Spacer(modifier = Modifier.height(8.dp))
+
+                                    OutlinedTextField(
+                                        value = storeName,
+                                        onValueChange = { storeName = it },
+                                        label = { Text(strings.enterStoreName) },
+                                        placeholder = { Text("e.g. Sri Lakshmi Provision Store") },
+                                        leadingIcon = { Icon(Icons.Default.Store, contentDescription = null, tint = EmeraldPrimary) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true,
+                                        shape = RoundedCornerShape(10.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
                                     Button(
                                         onClick = {
-                                            val name = if (customEmail.contains("@")) customEmail.substringBefore("@").replace(".", " ").capitalize(Locale.ROOT) else "Merchant"
-                                            onSignInWithGoogle(customEmail.trim(), name, storeName, phoneNumber)
+                                            val finalEmail = userEmail.ifBlank { "merchant@gmail.com" }
+                                            val finalName = ownerName.ifBlank {
+                                                if (finalEmail.contains("@")) finalEmail.substringBefore("@").replace(".", " ").capitalize(Locale.ROOT) else "Merchant"
+                                            }
+                                            val finalStore = storeName.ifBlank { "My Kirana Store" }
+                                            onSignInWithGoogle(finalEmail.trim(), finalName, finalStore, phoneNumber)
                                         },
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(10.dp),
                                         colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                                     ) {
-                                        Text("Continue with this Email", fontWeight = FontWeight.Bold)
+                                        Text(strings.continueWithAccount, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -289,15 +333,13 @@ fun AuthScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // 2. Microsoft Sign-In Button (FREE Plan)
+                        // Microsoft Sign-In Button
                         Button(
                             onClick = {
-                                onSignInWithMicrosoft(
-                                    "merchant.kadai@outlook.com",
-                                    "K. Ramanathan",
-                                    storeName,
-                                    phoneNumber
-                                )
+                                val email = if (userEmail.isNotBlank()) userEmail else "merchant@outlook.com"
+                                val name = if (ownerName.isNotBlank()) ownerName else "Merchant Owner"
+                                val store = if (storeName.isNotBlank()) storeName else "My Kirana Mart"
+                                onSignInWithMicrosoft(email, name, store, phoneNumber)
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -318,7 +360,7 @@ fun AuthScreen(
                                 MicrosoftLogoIcon(modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = "Continue with Microsoft (Free Plan)",
+                                    text = strings.signInMicrosoft,
                                     fontWeight = FontWeight.SemiBold,
                                     fontSize = 14.sp,
                                     color = Color.White
@@ -345,11 +387,12 @@ fun AuthScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // 3. Mobile Number Input
+                        // Mobile Number Input
                         OutlinedTextField(
                             value = phoneNumber,
                             onValueChange = { phoneNumber = it },
-                            label = { Text("Mobile Number (WhatsApp/UPI)") },
+                            label = { Text(strings.enterPhone) },
+                            placeholder = { Text("+91 98401 23456") },
                             leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = EmeraldPrimary) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
@@ -362,7 +405,7 @@ fun AuthScreen(
                             OutlinedTextField(
                                 value = otpCode,
                                 onValueChange = { otpCode = it },
-                                label = { Text("Enter 4-digit SMS OTP (Demo: 1234)") },
+                                label = { Text(strings.enterOtp) },
                                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = AmberSecondary) },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
@@ -376,10 +419,15 @@ fun AuthScreen(
                         Button(
                             onClick = {
                                 if (!otpSent) {
+                                    val phoneToUse = phoneNumber.ifBlank { "+91 98401 23456" }
+                                    phoneNumber = phoneToUse
                                     otpSent = true
                                     otpCode = "1234"
                                 } else {
-                                    onSignInWithPhone(phoneNumber, ownerName, storeName)
+                                    val phoneToUse = phoneNumber.ifBlank { "+91 98401 23456" }
+                                    val finalOwner = ownerName.ifBlank { "Kirana Merchant" }
+                                    val finalStore = storeName.ifBlank { "My Kirana Store" }
+                                    onSignInWithPhone(phoneToUse, finalOwner, finalStore)
                                 }
                             },
                             modifier = Modifier
@@ -390,26 +438,26 @@ fun AuthScreen(
                         ) {
                             Icon(if (otpSent) Icons.Default.CheckCircle else Icons.Default.Sms, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(if (otpSent) "Verify OTP & Enter Kadai" else "Send Login OTP", fontWeight = FontWeight.Bold)
+                            Text(if (otpSent) strings.verifyOtp else strings.sendOtp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-                // Guest / Demo Explore Button
+                // Guest Explore Button
                 TextButton(
                     onClick = onExploreAsGuest,
                     modifier = Modifier.testTag("btn_guest_explore")
                 ) {
                     Icon(Icons.Default.Visibility, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Explore Sri Lakshmi Kirana Demo Store", color = TextSecondary, fontWeight = FontWeight.SemiBold)
+                    Text(strings.exploreDemoStore, color = TextSecondary, fontWeight = FontWeight.SemiBold)
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-                // Privacy and Trust Note
+                // Trust Note
                 Text(
                     text = "🔒 Zero Financial Hallucination Guarantee • 100% Data Encrypted on Cloud & Device",
                     style = MaterialTheme.typography.labelSmall,
@@ -430,7 +478,6 @@ fun GoogleLogoIcon(modifier: Modifier = Modifier) {
         val cy = h / 2f
         val radius = w * 0.45f
 
-        // Draw clean multi-colored Google 'G' geometry
         drawCircle(color = Color(0xFF4285F4), radius = radius, center = Offset(cx, cy))
         drawCircle(color = Color.White, radius = radius * 0.65f, center = Offset(cx, cy))
         drawRect(

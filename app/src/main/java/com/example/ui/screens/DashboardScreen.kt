@@ -25,6 +25,7 @@ import com.example.data.local.entities.TransactionEntity
 import com.example.ui.components.SummaryHeroCards
 import com.example.ui.components.VoiceInputSheet
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -48,6 +49,7 @@ fun DashboardScreen(
     onNavigateToAiAnalytics: () -> Unit,
     onNavigateToBlueprint: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     val dateFormat = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
 
     LazyColumn(
@@ -72,15 +74,15 @@ fun DashboardScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "\"Speak your business. We handle the records.\"",
+                            text = "\"${strings.authTagline}\"",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                             color = EmeraldContainer
                         )
                         Text(
-                            text = "Tanglish & Voice-first AI ledger with Zero Financial Hallucination",
+                            text = "🇮🇳 ${strings.authBadge} • ${strings.zeroHallucination}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.8f),
+                            color = Color.White.copy(alpha = 0.85f),
                             fontSize = 11.sp
                         )
                     }
@@ -91,7 +93,7 @@ fun DashboardScreen(
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         modifier = Modifier.testTag("dashboard_view_blueprint_btn")
                     ) {
-                        Text("12-Part Spec", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(strings.blueprint, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -129,7 +131,7 @@ fun DashboardScreen(
                     .padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
                 Text(
-                    text = "Quick Actions (விரைவு பொத்தான்கள்)",
+                    text = strings.quickActions,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -142,28 +144,28 @@ fun DashboardScreen(
                 ) {
                     QuickActionButton(
                         icon = Icons.Default.AddShoppingCart,
-                        label = "Sale (விற்பனை)",
+                        label = strings.gaveUdhaar,
                         color = EmeraldPrimary,
                         modifier = Modifier.weight(1f),
                         onClick = { onSamplePromptClick("Ramesh 200 tea podi kudutharu") }
                     )
                     QuickActionButton(
                         icon = Icons.Default.CurrencyRupee,
-                        label = "Got ₹ (வரவு)",
+                        label = strings.gotJama,
                         color = JamaGreen,
                         modifier = Modifier.weight(1f),
                         onClick = { onSamplePromptClick("Murugan 1000 kudutharu") }
                     )
                     QuickActionButton(
                         icon = Icons.Default.ReceiptLong,
-                        label = "Expense (செலவு)",
+                        label = strings.addExpense,
                         color = AmberSecondary,
                         modifier = Modifier.weight(1f),
                         onClick = onNavigateToExpenses
                     )
                     QuickActionButton(
                         icon = Icons.Default.NotificationsActive,
-                        label = "Remind (நினைவு)",
+                        label = strings.reminders,
                         color = UdhaarRed,
                         modifier = Modifier.weight(1f),
                         onClick = onNavigateToReminders
@@ -182,13 +184,13 @@ fun DashboardScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Recent Transactions (சமீபத்திய பரிவர்த்தனைகள்)",
+                    text = strings.recentTransactions,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 TextButton(onClick = onNavigateToCustomers) {
-                    Text("All Khata", color = EmeraldPrimary, fontWeight = FontWeight.Bold)
+                    Text(strings.allCustomers, color = EmeraldPrimary, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -210,7 +212,7 @@ fun DashboardScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No transactions yet. Tap the microphone above to speak your first entry!",
+                            text = strings.noCustomersYet,
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextSecondary,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -224,9 +226,9 @@ fun DashboardScreen(
                 val isPayment = tx.type == "PAYMENT_RECEIVED"
 
                 val (badgeColor, badgeBg, prefix) = when {
-                    isCredit -> Triple(UdhaarRed, UdhaarRedContainer, "GAVE (Udhaar): +₹")
-                    isPayment -> Triple(JamaGreen, JamaGreenContainer, "GOT (Jama): -₹")
-                    else -> Triple(EmeraldPrimary, EmeraldContainer, "CASH SALE: ₹")
+                    isCredit -> Triple(UdhaarRed, UdhaarRedContainer, "${strings.gaveUdhaar}: +₹")
+                    isPayment -> Triple(JamaGreen, JamaGreenContainer, "${strings.gotJama}: -₹")
+                    else -> Triple(EmeraldPrimary, EmeraldContainer, "CASH: ₹")
                 }
 
                 Card(

@@ -14,12 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 
 @Composable
 fun SummaryHeroCards(
@@ -30,6 +30,8 @@ fun SummaryHeroCards(
     onSalesClick: () -> Unit,
     onExpensesClick: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -72,7 +74,7 @@ fun SummaryHeroCards(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "TOTAL UDHAAR (YOU'LL GET)",
+                                text = strings.pendingUdhaar.uppercase(),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = UdhaarRed
@@ -86,7 +88,7 @@ fun SummaryHeroCards(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "கடன் வசூல் பாக்கி (Pending from customers)",
+                            text = strings.topDebtors,
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
@@ -136,7 +138,7 @@ fun SummaryHeroCards(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Today's Sales",
+                            text = strings.todaySales,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = EmeraldPrimary
@@ -150,7 +152,7 @@ fun SummaryHeroCards(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "இன்றைய விற்பனை",
+                        text = strings.cashInflow,
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
                         fontSize = 10.sp
@@ -179,7 +181,7 @@ fun SummaryHeroCards(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Today Expenses",
+                            text = strings.todayExpenseTotal,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = AmberSecondary
@@ -193,7 +195,7 @@ fun SummaryHeroCards(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "இன்றைய செலவு",
+                        text = strings.expenses,
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
                         fontSize = 10.sp

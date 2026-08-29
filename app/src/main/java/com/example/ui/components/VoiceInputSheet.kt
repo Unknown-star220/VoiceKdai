@@ -35,6 +35,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,6 +49,7 @@ fun VoiceInputSheet(
     onSamplePromptClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     val context = LocalContext.current
     var typedInput by remember { mutableStateOf("") }
     var speechRecognizer by remember { mutableStateOf<SpeechRecognizer?>(null) }
@@ -150,7 +152,7 @@ fun VoiceInputSheet(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (isRecording) "Recording Voice (கேட்கிறது)..." else if (isProcessing) "AI Parsing Intent..." else "Speak Voice Entry (குரல் பதிவு)",
+                        text = if (isRecording) strings.listeningTitle else if (isProcessing) strings.processingVoice else strings.tapMicToSpeak,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -162,7 +164,7 @@ fun VoiceInputSheet(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = "Tanglish / தமிழ்",
+                        text = "Voice AI",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = OnEmeraldContainer,
@@ -221,7 +223,7 @@ fun VoiceInputSheet(
             }
 
             Text(
-                text = if (isRecording) "Tap to finish speech" else "Tap microphone & speak in Tamil or English",
+                text = if (isRecording) "Tap to finish speech" else strings.listeningHint,
                 style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary,
                 fontSize = 12.sp
@@ -229,9 +231,9 @@ fun VoiceInputSheet(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Sample scenario chips (Tanglish / Hinglish / Tamil voice simulation)
+            // Sample scenario chips
             Text(
-                text = "Tap sample Kirana voice scenario to test:",
+                text = "Tap sample voice scenario:",
                 style = MaterialTheme.typography.labelSmall,
                 color = TextMuted,
                 modifier = Modifier.align(Alignment.Start)
@@ -263,7 +265,7 @@ fun VoiceInputSheet(
             OutlinedTextField(
                 value = typedInput,
                 onValueChange = { typedInput = it },
-                placeholder = { Text("Or type here (e.g. Ramesh 200 tea podi)...", fontSize = 12.sp) },
+                placeholder = { Text(strings.micCtaHint, fontSize = 12.sp) },
                 trailingIcon = {
                     IconButton(
                         onClick = {

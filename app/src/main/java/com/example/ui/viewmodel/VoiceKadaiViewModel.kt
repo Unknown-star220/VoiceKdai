@@ -46,7 +46,10 @@ data class UiState(
     val userFeedbackMessage: String? = null,
     val searchQuery: String = "",
     val customerFilter: String = "ALL", // ALL, UDHAAR, ADVANCE, SETTLED
-    val activeBlueprintPart: Int = 1
+    val activeBlueprintPart: Int = 1,
+    val showPlayStoreReviewDialog: Boolean = false,
+    val appUsageSeconds: Long = 0L,
+    val hasSubmittedReview: Boolean = false
 )
 
 class VoiceKadaiViewModel(application: Application) : AndroidViewModel(application) {
@@ -86,18 +89,39 @@ class VoiceKadaiViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             repository.initializeSeedDataIfNeeded()
         }
+
+        // Start active usage 1-minute (60 seconds) timer for Play Store Review feedback
+        viewModelScope.launch {
+            var seconds = 0L
+            while (true) {
+                kotlinx.coroutines.delay(1000L)
+                seconds++
+                _uiState.update { it.copy(appUsageSeconds = seconds) }
+                // Prompt after 1 minute (60 seconds)
+                if (seconds == 60L && !_uiState.value.hasSubmittedReview) {
+                    _uiState.update { it.copy(showPlayStoreReviewDialog = true) }
+                }
+            }
+        }
     }
 
     fun navigateTo(screen: AppScreen, customerId: String? = null) {
         _uiState.update { it.copy(selectedScreen = screen, selectedCustomerId = customerId) }
     }
 
+    fun setLanguage(language: String) {
+        viewModelScope.launch {
+            repository.updateLanguage(language)
+            _uiState.update { it.copy(userFeedbackMessage = "Language updated: $language") }
+        }
+    }
+
     // --- Authentication Actions ---
     fun signInWithGoogle(
-        email: String = "safiya.umar13@gmail.com",
-        displayName: String = "Safiya Umar",
-        storeName: String = "Sri Lakshmi Kirana & General Store",
-        phone: String = "+91 98765 43210"
+        email: String,
+        displayName: String,
+        storeName: String,
+        phone: String
     ) {
         viewModelScope.launch {
             repository.signInWithProvider(
@@ -117,10 +141,10 @@ class VoiceKadaiViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun signInWithMicrosoft(
-        email: String = "merchant@outlook.com",
-        displayName: String = "K. Ramanathan",
-        storeName: String = "Ramanathan Wholesale Mart",
-        phone: String = "+91 98401 23456"
+        email: String,
+        displayName: String,
+        storeName: String,
+        phone: String
     ) {
         viewModelScope.launch {
             repository.signInWithProvider(
@@ -384,6 +408,40 @@ class VoiceKadaiViewModel(application: Application) : AndroidViewModel(applicati
     fun clearChat() {
         viewModelScope.launch {
             repository.clearAiChat()
+        }
+    }
+
+    // --- Google Play Store Feedback & Rating Prompt Controls ---
+    fun triggerPlayStoreReviewPrompt() {
+        _uiState.update { it.copy(showPlayStoreReviewDialog = true) }
+    }
+
+    fun dismissPlayStoreReview(remindLater: Boolean = false) {
+        _uiState.update {
+            it.copy(
+                showPlayStoreReviewDialog = false,
+                hasSubmittedReview = !remindLater // if remindLater, can prompt again after next session/interval
+            )
+        }
+    }
+
+    fun recordPlayStoreRating(stars: Int) {
+        _uiState.update {
+            it.copy(
+                showPlayStoreReviewDialog = false,
+                hasSubmittedReview = true,
+                userFeedbackMessage = "Thank you for rating VoiceKadai $stars Stars! ⭐"
+            )
+        }
+    }
+
+    fun submitMerchantFeedback(stars: Int, comments: String) {
+        _uiState.update {
+            it.copy(
+                showPlayStoreReviewDialog = false,
+                hasSubmittedReview = true,
+                userFeedbackMessage = "Thank you! Your feedback has been recorded. 🙏"
+            )
         }
     }
 }

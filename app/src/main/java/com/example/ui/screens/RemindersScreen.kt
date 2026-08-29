@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entities.ReminderEntity
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -34,6 +35,7 @@ fun RemindersScreen(
     onDeleteReminder: (String) -> Unit,
     onVoiceEntryPrompt: (String) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     val context = LocalContext.current
     val dateFormat = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
 
@@ -75,7 +77,7 @@ fun RemindersScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "SMART PAYMENT REMINDERS (வசூல் நினைவு)",
+                            text = strings.reminders.uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = UdhaarRed
@@ -83,13 +85,13 @@ fun RemindersScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         val pendingCount = reminders.filter { it.status == "PENDING" }.size
                         Text(
-                            text = if (pendingCount > 0) "$pendingCount Pending Collections" else "--",
+                            text = if (pendingCount > 0) "$pendingCount ${strings.reminders}" else "--",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Auto-scheduled via voice: \"Deepak kitta 1500 vasul pannanum naalaiki\"",
+                            text = "Auto-scheduled smart payment reminders",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
                             fontSize = 11.sp
@@ -117,7 +119,7 @@ fun RemindersScreen(
         // Reminders List Header
         item {
             Text(
-                text = "Scheduled Reminders (${reminders.size})",
+                text = "${strings.reminders} (${reminders.size})",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -135,12 +137,6 @@ fun RemindersScreen(
                         Icon(Icons.Outlined.NotificationsNone, contentDescription = null, tint = TextMuted, modifier = Modifier.size(48.dp))
                         Spacer(modifier = Modifier.height(10.dp))
                         Text("No active payment reminders", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = TextSecondary)
-                        Text(
-                            "Speak to create one: \"Deepak kitta 1500 vasul pannanum naalaiki\"",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextMuted,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
                     }
                 }
             }

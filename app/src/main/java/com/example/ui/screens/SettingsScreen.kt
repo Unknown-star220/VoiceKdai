@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entities.BusinessEntity
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -30,16 +31,18 @@ fun SettingsScreen(
     onBackClick: () -> Unit,
     onNavigateToBlueprint: () -> Unit,
     onOpenSubscription: () -> Unit,
+    onLanguageChange: (String) -> Unit = {},
     onSignOut: () -> Unit
 ) {
-    var selectedLanguage by remember { mutableStateOf(business?.language ?: "Tanglish") }
+    val strings = LocalAppStrings.current
+    var selectedLanguage by remember(business?.language) { mutableStateOf(business?.language ?: "Tanglish") }
     var safetyGateEnabled by remember { mutableStateOf(true) }
     var showSignOutDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Store & Account Settings", fontWeight = FontWeight.Bold) },
+                title = { Text(strings.settingsTitle, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -87,8 +90,8 @@ fun SettingsScreen(
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
-                                    Text(business?.userDisplayName ?: "Safiya Umar", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                    Text(business?.userEmail ?: "safiya.umar13@gmail.com", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Text(business?.userDisplayName?.ifBlank { "Merchant Owner" } ?: "Merchant Owner", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                    Text(business?.userEmail?.ifBlank { "merchant@gmail.com" } ?: "merchant@gmail.com", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                                 }
                             }
                             Surface(
@@ -128,8 +131,8 @@ fun SettingsScreen(
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text(business?.name ?: "Sri Lakshmi Kirana Store", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Text("Owner: ${business?.ownerName ?: "K. Ramanathan"} • ${business?.phone ?: "+91 98765 43210"}", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Text(business?.name?.ifBlank { "My Kirana Store" } ?: "My Kirana Store", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("Owner: ${business?.ownerName?.ifBlank { "Merchant Owner" } ?: "Merchant Owner"} • ${business?.phone ?: "+91 98401 23456"}", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                             }
                         }
                         Spacer(modifier = Modifier.height(12.dp))
@@ -142,7 +145,12 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.height(6.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("Active Plan:", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
-                            Text(business?.planTier ?: "PRO Plan", fontWeight = FontWeight.Bold, color = EmeraldPrimary)
+                            val isPro = business?.planTier == "PRO" || business?.planTier == "BUSINESS"
+                            Text(
+                                text = "${business?.planTier ?: "FREE"} Plan (${business?.maxDailyVoiceQuota ?: 50}/mo)",
+                                fontWeight = FontWeight.Bold,
+                                color = if (isPro) AmberSecondary else EmeraldPrimary
+                            )
                         }
                         Spacer(modifier = Modifier.height(10.dp))
                         OutlinedButton(
@@ -152,7 +160,57 @@ fun SettingsScreen(
                         ) {
                             Icon(Icons.Default.Payment, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Manage Real In-App Subscription (₹299/mo)")
+                            Text("View Subscription Plans (Free / Pro ₹299 / Business ₹999)")
+                        }
+                    }
+                }
+            }
+
+            // Language Preference Card (Full App Language Switching)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Translate, contentDescription = null, tint = EmeraldPrimary)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(strings.languageSelection, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        val languages = listOf(
+                            "English" to "English (Global)",
+                            "தமிழ்" to "தமிழ் (Pure Tamil)",
+                            "Tanglish" to "Tanglish (Tamil + English)",
+                            "हिंदी" to "हिंदी (Hindi)"
+                        )
+                        languages.forEach { (code, label) ->
+                            val isSelected = selectedLanguage.startsWith(code.take(4))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isSelected) EmeraldContainer.copy(alpha = 0.4f) else Color.Transparent)
+                                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) EmeraldDark else MaterialTheme.colorScheme.onSurface
+                                )
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = {
+                                        selectedLanguage = code
+                                        onLanguageChange(code)
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -175,41 +233,11 @@ fun SettingsScreen(
                                 Icon(Icons.Default.Security, contentDescription = null, tint = EmeraldPrimary)
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
-                                    Text("Zero-Hallucination Safety Gate", fontWeight = FontWeight.Bold)
-                                    Text("Mandatory visual verification before ledger commit", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Text(strings.zeroHallucination, fontWeight = FontWeight.Bold)
+                                    Text(strings.safetyGateDesc, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                                 }
                             }
                             Switch(checked = safetyGateEnabled, onCheckedChange = { safetyGateEnabled = it })
-                        }
-                    }
-                }
-            }
-
-            // Language Preference
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Text("Voice & Dialect Language", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        val languages = listOf("Tanglish (Tamil + English)", "தமிழ் (Pure Tamil)", "Hinglish (Hindi + English)", "हिंदी (Hindi)", "English")
-                        languages.forEach { lang ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(lang, style = MaterialTheme.typography.bodyMedium)
-                                RadioButton(
-                                    selected = selectedLanguage.startsWith(lang.take(4)),
-                                    onClick = { selectedLanguage = lang }
-                                )
-                            }
                         }
                     }
                 }
@@ -227,7 +255,7 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Default.MenuBook, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Explore 12-Part System Specifications", fontWeight = FontWeight.Bold)
+                    Text(strings.blueprint, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -245,7 +273,7 @@ fun SettingsScreen(
                 ) {
                     Icon(Icons.Default.Logout, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Sign Out / Switch Account", fontWeight = FontWeight.Bold)
+                    Text(strings.signOut, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -267,8 +295,8 @@ fun SettingsScreen(
     if (showSignOutDialog) {
         AlertDialog(
             onDismissRequest = { showSignOutDialog = false },
-            title = { Text("Sign Out of VoiceKadai?") },
-            text = { Text("You will return to the Google/Microsoft Sign-In screen. Your local offline database is securely stored.") },
+            title = { Text(strings.signOut) },
+            text = { Text("You will return to the Sign-In screen. Your data remains safe on your device.") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -277,12 +305,12 @@ fun SettingsScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = UdhaarRed)
                 ) {
-                    Text("Sign Out")
+                    Text(strings.signOut)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showSignOutDialog = false }) {
-                    Text("Cancel")
+                    Text(strings.cancel)
                 }
             }
         )

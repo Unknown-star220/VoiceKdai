@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.entities.ExpenseEntity
 import com.example.ui.theme.*
+import com.example.ui.util.LocalAppStrings
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -37,6 +38,7 @@ fun ExpensesScreen(
     onAddExpense: (category: String, amount: Double, note: String, paymentMode: String) -> Unit,
     onDeleteExpense: (String) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedCategoryFilter by remember { mutableStateOf("ALL") }
 
@@ -60,7 +62,7 @@ fun ExpensesScreen(
                     .padding(bottom = 70.dp)
                     .testTag("add_expense_fab")
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Expense")
+                Icon(Icons.Default.Add, contentDescription = strings.addExpense)
             }
         }
     ) { paddingVals ->
@@ -89,7 +91,7 @@ fun ExpensesScreen(
                     ) {
                         Column {
                             Text(
-                                text = "TODAY'S EXPENSES (இன்றைய செலவு)",
+                                text = strings.todayExpenseTotal.uppercase(),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = AmberSecondary
@@ -145,7 +147,7 @@ fun ExpensesScreen(
                             FilterChip(
                                 selected = selectedCategoryFilter == cat,
                                 onClick = { selectedCategoryFilter = cat },
-                                label = { Text(cat.replace("_", " "), fontSize = 11.sp) }
+                                label = { Text(if (cat == "ALL") strings.allCustomers else cat.replace("_", " "), fontSize = 11.sp) }
                             )
                         }
                     }
@@ -160,7 +162,7 @@ fun ExpensesScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Expense Log (${filteredExpenses.size})",
+                        text = "${strings.expenses} (${filteredExpenses.size})",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -176,7 +178,7 @@ fun ExpensesScreen(
                             .padding(32.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No expenses in this category. Speak: \"Current bill 1450 kattiyaachu\"", color = TextSecondary)
+                        Text("No expenses in this category.", color = TextSecondary)
                     }
                 }
             } else {
@@ -257,7 +259,7 @@ fun ExpensesScreen(
 
         AlertDialog(
             onDismissRequest = { showAddDialog = false },
-            title = { Text("Record Expense (செலவு பதிவு)", fontWeight = FontWeight.Bold) },
+            title = { Text(strings.addExpense, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Category:", style = MaterialTheme.typography.labelMedium)
@@ -301,12 +303,12 @@ fun ExpensesScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AmberSecondary)
                 ) {
-                    Text("Record Expense")
+                    Text(strings.save)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showAddDialog = false }) {
-                    Text("Cancel")
+                    Text(strings.cancel)
                 }
             }
         )
